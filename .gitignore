@@ -1,0 +1,6 @@
+# Pycache folder
+__pycache__
+
+# VS Code specific files
+*.code-workspace
+.vscode/
