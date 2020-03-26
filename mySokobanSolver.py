@@ -26,7 +26,7 @@ import sokoban
 #DEFINE SOME GLOBAL VARIABLES
 #this calls the warehouse functions and loads the new one
 wh=sokoban.Warehouse()
-wh.load_warehouse("./warehouses/warehouse_57.txt")
+wh.load_warehouse("./warehouses/warehouse_29.txt")
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 
@@ -90,16 +90,17 @@ def taboo_cells(warehouse):
                     bad_cells.append((x,y))
                 if (x+1,y) in wh.walls and (x,y+1) in wh.walls:
                     bad_cells.append((x,y))
-                if (x+1,y) in bad_cells and (x-1,y) in bad_cells:
-                    bad_cells.append((x,y))
-                if (x,y+1) in bad_cells and (x,y-1) in bad_cells:
-                    bad_cells.append((x,y))
     for y in range(wh.nrows):
         for x in range(wh.ncols):
-            if (x+1,y) in bad_cells and (x-1,y) in bad_cells:
-                bad_cells.append((x,y))
-            if (x,y+1) in bad_cells and (x,y-1) in bad_cells:
-                bad_cells.append((x,y))
+            if (x,y) not in wh.walls and (x,y) not in wh.targets:
+                if (x+1,y) in bad_cells and (x-1,y) in bad_cells and (x, y-1) in wh.walls:
+                    bad_cells.append((x,y))
+                if (x,y+1) in bad_cells and (x,y-1) in bad_cells and (x-1, y) in wh.walls:
+                    bad_cells.append((x,y))
+                if (x+1,y) in bad_cells and (x-1,y) in bad_cells and (x, y+1) in wh.walls:
+                    bad_cells.append((x,y))
+                if (x,y+1) in bad_cells and (x,y-1) in bad_cells and (x+1, y) in wh.walls:
+                    bad_cells.append((x,y))
     bad_cells=list(set(bad_cells))
     grid=""
     for y in range(wh.nrows):
