@@ -26,7 +26,7 @@ import sokoban
 #DEFINE SOME GLOBAL VARIABLES
 #this calls the warehouse functions and loads the new one
 wh=sokoban.Warehouse()
-wh.load_warehouse("./warehouses/warehouse_29.txt")
+wh.load_warehouse("./warehouses/warehouse_57.txt")
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 
