@@ -23,8 +23,10 @@ This is not negotiable!
 # with these files
 import search 
 import sokoban
-
-
+#DEFINE SOME GLOBAL VARIABLES
+#this calls the warehouse functions and loads the new one
+wh=sokoban.Warehouse()
+wh.load_warehouse("./warehouses/warehouse_57.txt")
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 
@@ -34,7 +36,7 @@ def my_team():
     of triplet of the form (student_number, first_name, last_name)
     
     '''
-    return [(STUDENT_NUMBER_HERE, 'Kevin', 'Duong'), (STUDENT_NUMBER_HERE, 'Nicholas', 'Havilah'), (10522662, 'Connor', 'McHugh')]
+#    return [ (1234567, 'Ada', 'Lovelace'), (1234568, 'Grace', 'Hopper'), (1234569, 'Eva', 'Tardos') ]
     raise NotImplementedError()
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -61,32 +63,101 @@ def taboo_cells(warehouse):
        The returned string should NOT have marks for the worker, the targets,
        and the boxes.  
     '''
-    ##         "INSERT YOUR CODE HERE"    
-    raise NotImplementedError()
+    ##         "INSERT YOUR CODE HERE"
+    bad_cells=[]
+    f=open("./warehouses/warehouse_57.txt","r")
+    print(f.read())
+    #this was good except it included too many extra cells unnecessarily, plus it included some negatives as well, which was wrong
+##    for (x,y) in wh.walls:
+##        if (x-1,y-1) not in wh.walls:
+##            bad_cells.append((x-1,y-1))
+##        if (x+1,y-1) not in wh.walls:
+##            bad_cells.append((x+1,y-1))
+##        if (x-1,y+1) not in wh.walls:
+##            bad_cells.append((x-1,y+1))
+##        if (x+1,y+1) not in wh.walls:
+##            bad_cells.append((x+1,y+1))
+##    bad_cells=list(set(bad_cells))
+##    print(bad_cells)
+    for y in range(wh.nrows):
+        for x in range(wh.ncols):
+            if (x,y) not in wh.walls:
+                if (x-1,y-1) in wh.walls and (x,y-1) in wh.walls and (x-1,y) in wh.walls:
+                    bad_cells.append((x-1,y-1))
+                if (x+1,y-1) in wh.walls and (x,y-1) in wh.walls and (x+1,y) in wh.walls:
+                    bad_cells.append((x+1,y-1))
+                if (x-1,y+1) in wh.walls and (x-1,y) in wh.walls and (x,y+1) in wh.walls:
+                    bad_cells.append((x-1,y+1))
+                if (x+1,y+1) in wh.walls and (x+1,y) in wh.walls and (x,y+1) in wh.walls:
+                    bad_cells.append((x+1,y+1))
+    bad_cells=list(set(bad_cells))
+    print(bad_cells)
+    visualise = str(warehouse)
+
+    level_row = [list(x) for x in visualise.split('\n')]
+    level_col = [list(x) for x in zip(*level_row)]
+
+    # In Python 3, map returns an iterator, so to get a list from the last solution
+    # you need list(map(list, zip(*lis))) or [*map(list, zip(*lis))]
+
+    
+
+    # dimensions of the warehouse loaded
+    wall_x_max = len(level_col)
+    wall_y_max = len(level_row)
+
+    # First and last locations of the walls to define the playing area
+    final_x_loc = []
+    first_x_loc = []
+    final_y_loc = []
+    first_y_loc = []
+
+    # since the printed version was already a list of lists it was easier to just find the last # which would be the end
+    for i in range(wall_y_max):
+        final_x = next(wall_x_max - i for i, j in enumerate(reversed(level_row[i]), 1) if j != ' ')
+        first_x = next(row for row, x in enumerate(level_row[i]) if x != ' ')
+        first_x_loc.append(first_x)
+        final_x_loc.append(final_x)
+
+    # since the printed version was already a list of lists it was easier to just find the last # which would be the end
+    for i in range(wall_x_max):
+        final_y = next(wall_y_max - i for i, j in enumerate(reversed(level_col[i]), 1) if j != ' ')
+        first_y = next(col for col, y in enumerate(level_col[i]) if y != ' ')
+        first_y_loc.append(first_y)
+        final_y_loc.append(final_y)
+
+
+    for i in range(wall_x_max - 1):
+        for j in range(wall_y_max - 1):
+            if j > first_y_loc[i] and j < final_y_loc[i] and i < final_x_loc[j] and i > first_x_loc[j] and (
+                    i, j) not in warehouse.targets:
+                if (i + 1, j) in warehouse.walls or (i - 1, j) in warehouse.walls:
+                    if (i, j + 1) in warehouse.walls or (i, j - 1) in warehouse.walls:
+                        if ([i, j]) not in bad_cells and (i, j) not in warehouse.walls:
+                            bad_cells.append([i, j])
+
+
+    # Remove all items except taboo spaces and walls
+    for i in range(wall_y_max - 1):
+        level_row[i] = [item.replace('@', ' ')
+                            .replace('*', ' ')
+                            .replace('$', ' ')
+                            .replace('.', ' ')
+                        for item in level_row[i]]
+
+    for i in range(wall_x_max - 1):
+        level_col[i] = [item.replace('@', ' ')
+                            .replace('*', ' ')
+                            .replace('$', ' ')
+                            .replace('.', ' ')
+                        for item in level_col[i]]
+
+    # Select the items in testy that correspond with taboo and replace them with an 'X'
+    for ([i, j]) in bad_cells:
+        level_row[j][i] = 'X'  # i and j are back to front because they are lists of lists not an actual matrix
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-
-def manhattan_distance(coords_a, coords_b):
-    '''
-    Calculate and return the manhattan distance between two cells.
-    
-    @param coord_a:
-        Tuple containing the first set of coordinates
-    
-    @param coord_b:
-        Tuple containing the second set of coordinates
-    
-    @return:
-        An integer that is the manhattan distance between the given sets of 
-        coordinates
-    
-    '''
-
-    manhattan = int(abs(coords_a[0] - coords_b[0]) + abs(coords_a[1] - coords_b[1]))
-    return manhattan
-
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 class SokobanPuzzle(search.Problem):
     '''
@@ -161,7 +232,6 @@ def check_elem_action_seq(warehouse, action_seq):
     '''
     
     ##         "INSERT YOUR CODE HERE"
-    
     raise NotImplementedError()
 
 
@@ -266,6 +336,5 @@ def solve_weighted_sokoban_elem(warehouse, push_costs):
     
     raise NotImplementedError()
 
-
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
+taboo_cells("./warehouses/warehouse_57.txt")
