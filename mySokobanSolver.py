@@ -111,6 +111,26 @@ def taboo_cells(warehouse):
     print(grid+"\n")
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+def manhattan_distance(coords_a, coords_b):
+    '''
+    Calculate and return the manhattan distance between two cells.
+    
+    @param coord_a:
+        Tuple containing the first set of coordinates
+    
+    @param coord_b:
+        Tuple containing the second set of coordinates
+    
+    @return:
+        An integer that is the manhattan distance between the given sets of 
+        coordinates
+    
+    '''
+
+    manhattan = int(abs(coords_a[0] - coords_b[0]) + abs(coords_a[1] - coords_b[1]))
+    return manhattan
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 class SokobanPuzzle(search.Problem):
     '''
