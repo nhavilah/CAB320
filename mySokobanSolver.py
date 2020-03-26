@@ -99,13 +99,13 @@ def taboo_cells(warehouse):
     for y in range(wh.nrows):
         grid=grid+"\n"
         for x in range(wh.ncols):
-            if (x,y) not in wh.walls and (x,y) not in bad_cells:
+            if (x,y) not in wh.walls and (x,y) not in bad_cells and (x,y) not in wh.targets:
                 grid=grid+" "
-            if(x,y) in wh.walls:
+            if(x,y) in wh.walls and (x,y) not in bad_cells and (x,y) not in wh.targets:
                 grid=grid+"#"
-            if (x,y) in bad_cells and (x,y) not in wh.walls:
+            if (x,y) in bad_cells and (x,y) not in wh.walls and (x,y) not in wh.targets:
                 grid=grid+"/"
-            if(x,y) in wh.targets:
+            if(x,y) in wh.targets and (x,y) not in wh.walls and (x,y) not in bad_cells:
                 grid=grid+"."
 
     print(grid+"\n")
