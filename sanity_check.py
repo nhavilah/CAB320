@@ -29,7 +29,7 @@ def test_taboo_cells():
     wh.load_warehouse("./warehouses/warehouse_01.txt")
     expected_answer = '####  \n#X #  \n#  ###\n#   X#\n#   X#\n#XX###\n####  '
     answer = taboo_cells(wh)
-    fcn = test_taboo_cells    
+    fcn = test_taboo_cells
     print('<<  Testing {} >>'.format(fcn.__name__))
     if answer==expected_answer:
         print(fcn.__name__, ' passed!  :-)\n')
