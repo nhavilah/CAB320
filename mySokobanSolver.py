@@ -25,8 +25,8 @@ import search
 import sokoban
 #DEFINE SOME GLOBAL VARIABLES
 #this calls the warehouse functions and loads the new one
-wh=sokoban.Warehouse()
-wh.load_warehouse("./warehouses/warehouse_29.txt")
+# wh=sokoban.Warehouse()
+# wh.load_warehouse("./warehouses/warehouse_25.txt")
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 
@@ -36,7 +36,7 @@ def my_team():
     of triplet of the form (student_number, first_name, last_name)
     
     '''
-    return [(STUDENT_NUMBER_HERE, 'Kevin', 'Duong'), (STUDENT_NUMBER_HERE, 'Nicholas', 'Havilah'), (10522662, 'Connor', 'McHugh')]
+    return [(12345678, 'Kevin', 'Duong'), (12345678, 'Nicholas', 'Havilah'), (10522662, 'Connor', 'McHugh')]
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -62,10 +62,14 @@ def taboo_cells(warehouse):
        The returned string should NOT have marks for the worker, the targets,
        and the boxes.  
     '''
-    ##         "INSERT YOUR CODE HERE"
+    # Function needs to use wharehouse that is defined by marker script/sanity check
+    wh = warehouse
+    
     bad_cells=[]
-    f=open(warehouse,"r")
-    print(f.read())
+    # f=open(str(warehouse),"r")
+    # print(f.read())
+    
+    
     #this was good except it included too many extra cells unnecessarily, plus it included some negatives as well, which was wrong
     ##    for (x,y) in wh.walls:
     ##        if (x-1,y-1) not in wh.walls:
@@ -78,6 +82,8 @@ def taboo_cells(warehouse):
     ##            bad_cells.append((x+1,y+1))
     ##    bad_cells=list(set(bad_cells))
     ##    print(bad_cells)
+    
+    
     for y in range(wh.nrows):
         for x in range(wh.ncols):
             if (x,y) not in wh.walls and (x,y) not in wh.targets:
@@ -89,6 +95,7 @@ def taboo_cells(warehouse):
                     bad_cells.append((x,y))
                 if (x+1,y) in wh.walls and (x,y+1) in wh.walls:
                     bad_cells.append((x,y))
+                    
     for y in range(wh.nrows):
         for x in range(wh.ncols):
             if (x,y) not in wh.walls and (x,y) not in wh.targets:
@@ -100,8 +107,10 @@ def taboo_cells(warehouse):
                     bad_cells.append((x,y))
                 if (x,y+1) in bad_cells and (x,y-1) in bad_cells and (x+1, y) in wh.walls:
                     bad_cells.append((x,y))
+                    
     bad_cells=list(set(bad_cells))
     grid=""
+    
     for y in range(wh.nrows):
         grid=grid+"\n"
         for x in range(wh.ncols):
@@ -110,11 +119,12 @@ def taboo_cells(warehouse):
             if(x,y) in wh.walls and (x,y) not in bad_cells and (x,y) not in wh.targets:
                 grid=grid+"#"
             if (x,y) in bad_cells and (x,y) not in wh.walls and (x,y) not in wh.targets:
-                grid=grid+"/"
+                grid=grid+"X"
             if(x,y) in wh.targets and (x,y) not in wh.walls and (x,y) not in bad_cells:
-                grid=grid+"."
+                grid=grid+" "
 
-    print(grid+"\n")
+    # print(grid+"\n")
+    return grid+"\n"
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 def manhattan_distance(coords_a, coords_b):
@@ -255,6 +265,8 @@ def can_go_there(warehouse, dst):
     
     ##         "INSERT YOUR CODE HERE"
     
+    
+        
     raise NotImplementedError()
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
