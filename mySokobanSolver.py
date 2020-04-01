@@ -201,7 +201,8 @@ class SokobanPuzzle(search.Problem):
     #     Note that you will need to add several functions to
     #     complete this class. For example, a 'result' function is needed
     #     to satisfy the interface of 'search.Problem'.
-
+    allow_taboo_push=False
+    macro=False
     def __init__(self, warehouse):
         self.game = warehouse
         self.targets = self.game.targets
@@ -209,16 +210,75 @@ class SokobanPuzzle(search.Problem):
         self.walls = walls
         self.boxes = boxes
         self.taboo = taboo_cells(self.game)
-
+        
     def actions(self, state):
         """
         Return the list of actions that can be executed in the given state.
-
+        
         As specified in the header comment of this class, the attributes
         'self.allow_taboo_push' and 'self.macro' should be tested to determine
         what type of list of actions is to be returned.
         """
-        raise NotImplementedError
+        #define all available actions as a tuple(not permeable this way)
+        allActions = ["L","R","U","D"]
+        #determine the list of legal actions to be returned, based on if its elementary or macro movements
+        if self.macro==False:
+            #retrieve the current players position
+            current_position = self.worker
+            if self.allow_taboo_push==True:
+                if ((current_position.x+1),current_position.y) not in wh.walls or ((current_position.x+1),current_position.y) not in taboo_cells.bad_cells:
+                    allActions.remove("R")
+                if ((current_position.x-1),current_position.y) not in wh.walls or ((current_position.x-1),current_position.y) not in taboo_cells.bad_cells:
+                    allActions.remove("L")
+                if (current_position.x,(current_position.y+1)) not in wh.walls or (current_position.x,(current_position.y+1)) not in taboo_cells.bad_cells:
+                    allActions.remove("D")
+                if (current_position.x,(current_position.y-1)) not in wh.walls or (current_position.x,(current_position.y-1)) not in taboo_cells.bad_cells:  
+                    allActions.remove("U") 
+            if self.allow_taboo_push==False:
+                #retrieve the current players position
+                if ((current_position.x+1),current_position.y) not in wh.walls:
+                    allActions.remove("R")
+                if ((current_position.x-1),current_position.y) not in wh.walls:
+                    allActions.remove("L")
+                if (current_position.x,(current_position.y+1)) not in wh.walls:
+                    allActions.remove("D")
+                if (current_position.x,(current_position.y-1)) not in wh.walls:  
+                    allActions.remove("U")
+        if self.macro==True:
+            for box in self.boxes:
+                current_position=box
+                if self.allow_taboo_push==True:
+                    if ((current_position.x+1),current_position.y) not in wh.walls or ((current_position.x+1),current_position.y) not in taboo_cells.bad_cells:
+                        allActions.remove("R")
+                    if ((current_position.x-1),current_position.y) not in wh.walls or ((current_position.x-1),current_position.y) not in taboo_cells.bad_cells:
+                        allActions.remove("L")
+                    if (current_position.x,(current_position.y+1)) not in wh.walls or (current_position.x,(current_position.y+1)) not in taboo_cells.bad_cells:
+                        allActions.remove("D")
+                    if (current_position.x,(current_position.y-1)) not in wh.walls or (current_position.x,(current_position.y-1)) not in taboo_cells.bad_cells:  
+                        allActions.remove("U") 
+                if self.allow_taboo_push==False:
+                    #retrieve the current players position
+                    if ((current_position.x+1),current_position.y) not in wh.walls:
+                        allActions.remove("R")
+                    if ((current_position.x-1),current_position.y) not in wh.walls:
+                        allActions.remove("L")
+                    if (current_position.x,(current_position.y+1)) not in wh.walls:
+                        allActions.remove("D")
+                    if (current_position.x,(current_position.y-1)) not in wh.walls:  
+                        allActions.remove("U")
+        return allActions
+
+    def result(self, state, action):
+        """Return the state that results from executing the given
+        action in the given state. The action must be one of
+        self.actions(state).
+        applying action a to state s results in
+        s_next = s[:a]+s[-1:a-1:-1]
+        """
+        assert action in self.actions(state)
+        return tuple( list(state[:action])+list(reversed(state[action:])) )
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
