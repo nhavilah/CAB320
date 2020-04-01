@@ -203,12 +203,12 @@ class SokobanPuzzle(search.Problem):
     #     to satisfy the interface of 'search.Problem'.
 
     def __init__(self, warehouse):
-        self.warehouse = warehouse
-        self.targets = self.warehouse.targets
+        self.game = warehouse
+        self.targets = self.game.targets
         self.macro = macro
         self.walls = walls
         self.boxes = boxes
-        self.taboo = taboo_cells(self.warehouse)
+        self.taboo = taboo_cells(self.game)
 
     def actions(self, state):
         """
