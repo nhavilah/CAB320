@@ -78,21 +78,21 @@ def taboo_cells(warehouse):
     for y in range(warehouse_height):
         # Initialy, the program assumes that it is not looking in the game area
         inside_walls = False
-        
+
         for x in range(warehouse_width):
             # This only needs to be run until the program find the first wall for each row
             if not inside_walls:
                 # Once we find the first wall in a row, we can assume that we have entered the game area
                 if (x, y) in walls:
                     inside_walls = True
-                        
+
             else:
                 # If the program finds lots of empty space after a wall, we can assume that we have left the game area
                 # THIS MAY NEED TO BE REWRITTERN TO BE MORE DEFINITE (e.g. with a loop)
                 if (x+1, y) not in walls and (x+2, y) not in walls and (x+3, y) not in walls and (x+4, y) not in walls and (x+5, y) not in walls:
                     inside_walls = False
                     break
-            
+
                 if (x, y) not in walls and (x, y) not in targets:
                     if (x, y-1) in walls and (x-1, y) in walls:
                         taboo_cells_arr.append((x, y))
@@ -105,11 +105,11 @@ def taboo_cells(warehouse):
 
                     if (x+1, y) in walls and (x, y+1) in walls:
                         taboo_cells_arr.append((x, y))
-                            
-    # Check for taboo cells using Rule 2 
+
+    # Check for taboo cells using Rule 2
     for y in range(warehouse_width):
         for x in range(warehouse_height):
-            if (x, y) not in walls and (x, y) not in targets:	
+            if (x, y) not in walls and (x, y) not in targets:
                 if (x+1, y) in taboo_cells_arr and (x-1, y) in taboo_cells_arr and (x, y-1) in walls:
                     taboo_cells_arr.append((x, y))
 
@@ -126,8 +126,8 @@ def taboo_cells(warehouse):
     for y in range(warehouse_height):
         # Add a new line character as long as it is after the first row but before the last row
         if x > 0 and y > 0 and x < warehouse_height:
-                taboo_visual += '\n'
-     
+            taboo_visual += '\n'
+
         for x in range(warehouse_height):
             # Add empty spaces
             if (x, y) not in walls and (x, y) not in taboo_cells_arr:
@@ -193,78 +193,72 @@ class SokobanPuzzle(search.Problem):
     return elementary actions.        
     '''
 
-    #
-    #         "INSERT YOUR CODE HERE"
-    #
-    #     Revisit the sliding puzzle and the pancake puzzle for inspiration!
-    #
-    #     Note that you will need to add several functions to
-    #     complete this class. For example, a 'result' function is needed
-    #     to satisfy the interface of 'search.Problem'.
-    allow_taboo_push=False
-    macro=False
-    def __init__(self, warehouse):
+    allow_taboo_push = False
+    macro = False
+
+    def __init__(self, warehouse, targets):
         self.game = warehouse
         self.targets = self.game.targets
         self.macro = macro
         self.walls = walls
         self.boxes = boxes
+        self.worker = worker
         self.taboo = taboo_cells(self.game)
-        
+
     def actions(self, state):
         """
         Return the list of actions that can be executed in the given state.
-        
+
         As specified in the header comment of this class, the attributes
         'self.allow_taboo_push' and 'self.macro' should be tested to determine
         what type of list of actions is to be returned.
         """
-        #define all available actions as a tuple(not permeable this way)
-        allActions = ["L","R","U","D"]
-        #determine the list of legal actions to be returned, based on if its elementary or macro movements
-        if self.macro==False:
-            #retrieve the current players position
+        # define all available actions as a tuple(not permeable this way)
+        allActions = ["L", "R", "U", "D"]
+        # determine the list of legal actions to be returned, based on if its elementary or macro movements
+        if self.macro == False:
+            # retrieve the current players position
             current_position = self.worker
-            if self.allow_taboo_push==True:
-                if ((current_position.x+1),current_position.y) not in wh.walls or ((current_position.x+1),current_position.y) not in taboo_cells.bad_cells:
+            if self.allow_taboo_push == True:
+                if ((current_position.x+1), current_position.y) not in walls or ((current_position.x+1), current_position.y) not in taboo_cells.bad_cells:
                     allActions.remove("R")
-                if ((current_position.x-1),current_position.y) not in wh.walls or ((current_position.x-1),current_position.y) not in taboo_cells.bad_cells:
+                if ((current_position.x-1), current_position.y) not in walls or ((current_position.x-1), current_position.y) not in taboo_cells.bad_cells:
                     allActions.remove("L")
-                if (current_position.x,(current_position.y+1)) not in wh.walls or (current_position.x,(current_position.y+1)) not in taboo_cells.bad_cells:
+                if (current_position.x, (current_position.y+1)) not in walls or (current_position.x, (current_position.y+1)) not in taboo_cells.bad_cells:
                     allActions.remove("D")
-                if (current_position.x,(current_position.y-1)) not in wh.walls or (current_position.x,(current_position.y-1)) not in taboo_cells.bad_cells:  
-                    allActions.remove("U") 
-            if self.allow_taboo_push==False:
-                #retrieve the current players position
-                if ((current_position.x+1),current_position.y) not in wh.walls:
-                    allActions.remove("R")
-                if ((current_position.x-1),current_position.y) not in wh.walls:
-                    allActions.remove("L")
-                if (current_position.x,(current_position.y+1)) not in wh.walls:
-                    allActions.remove("D")
-                if (current_position.x,(current_position.y-1)) not in wh.walls:  
+                if (current_position.x, (current_position.y-1)) not in walls or (current_position.x, (current_position.y-1)) not in taboo_cells.bad_cells:
                     allActions.remove("U")
-        if self.macro==True:
+            if self.allow_taboo_push == False:
+                # retrieve the current players position
+                if ((current_position.x+1), current_position.y) not in walls:
+                    allActions.remove("R")
+                if ((current_position.x-1), current_position.y) not in walls:
+                    allActions.remove("L")
+                if (current_position.x, (current_position.y+1)) not in walls:
+                    allActions.remove("D")
+                if (current_position.x, (current_position.y-1)) not in walls:
+                    allActions.remove("U")
+        if self.macro == True:
             for box in self.boxes:
-                current_position=box
-                if self.allow_taboo_push==True:
-                    if ((current_position.x+1),current_position.y) not in wh.walls or ((current_position.x+1),current_position.y) not in taboo_cells.bad_cells:
+                current_position = box
+                if self.allow_taboo_push == True:
+                    if ((current_position.x+1), current_position.y) not in walls or ((current_position.x+1), current_position.y) not in taboo_cells.bad_cells:
                         allActions.remove("R")
-                    if ((current_position.x-1),current_position.y) not in wh.walls or ((current_position.x-1),current_position.y) not in taboo_cells.bad_cells:
+                    if ((current_position.x-1), current_position.y) not in walls or ((current_position.x-1), current_position.y) not in taboo_cells.bad_cells:
                         allActions.remove("L")
-                    if (current_position.x,(current_position.y+1)) not in wh.walls or (current_position.x,(current_position.y+1)) not in taboo_cells.bad_cells:
+                    if (current_position.x, (current_position.y+1)) not in walls or (current_position.x, (current_position.y+1)) not in taboo_cells.bad_cells:
                         allActions.remove("D")
-                    if (current_position.x,(current_position.y-1)) not in wh.walls or (current_position.x,(current_position.y-1)) not in taboo_cells.bad_cells:  
-                        allActions.remove("U") 
-                if self.allow_taboo_push==False:
-                    #retrieve the current players position
-                    if ((current_position.x+1),current_position.y) not in wh.walls:
+                    if (current_position.x, (current_position.y-1)) not in walls or (current_position.x, (current_position.y-1)) not in taboo_cells.bad_cells:
+                        allActions.remove("U")
+                if self.allow_taboo_push == False:
+                    # retrieve the current players position
+                    if ((current_position.x+1), current_position.y) not in walls:
                         allActions.remove("R")
-                    if ((current_position.x-1),current_position.y) not in wh.walls:
+                    if ((current_position.x-1), current_position.y) not in walls:
                         allActions.remove("L")
-                    if (current_position.x,(current_position.y+1)) not in wh.walls:
+                    if (current_position.x, (current_position.y+1)) not in walls:
                         allActions.remove("D")
-                    if (current_position.x,(current_position.y-1)) not in wh.walls:  
+                    if (current_position.x, (current_position.y-1)) not in walls:
                         allActions.remove("U")
         return allActions
 
@@ -276,7 +270,7 @@ class SokobanPuzzle(search.Problem):
         s_next = s[:a]+s[-1:a-1:-1]
         """
         assert action in self.actions(state)
-        return tuple( list(state[:action])+list(reversed(state[action:])) )
+        return tuple(list(state[:action])+list(reversed(state[action:])))
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 
