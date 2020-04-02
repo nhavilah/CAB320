@@ -330,6 +330,10 @@ def solve_sokoban_elem(warehouse):
     #empty list to store the boxes if they aren't in the goal state
     #boxes_out_of_goal_state=[]
     #This function defines the approximate cost of movement that will be required from manhattan distance
+    walls = warehouse.walls
+    targets = warehouse.targets
+    boxes = warehouse.boxes
+    
     def h():
         #check if the boxes are in the target areas or not, and if they aren't, append them to a list that we can work from
         # for target in self.targets:
@@ -431,3 +435,7 @@ def solve_weighted_sokoban_elem(warehouse, push_costs):
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+wh = sokoban.Warehouse()
+wh.load_warehouse("./warehouses/warehouse_01.txt")
+solve_sokoban_elem(wh)
