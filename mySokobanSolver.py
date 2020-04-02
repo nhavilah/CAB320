@@ -26,7 +26,10 @@ import sokoban
 
 
 # DEFINE SOME GLOBAL VARIABLES
-
+UP=(0,-1)
+DOWN=(0,1)
+LEFT=(-1,0)
+RIGHT=(1,0)
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 
@@ -36,7 +39,7 @@ def my_team():
     of triplet of the form (student_number, first_name, last_name)
 
     '''
-    return [(12345678, 'Kevin', 'Duong'), (12345678, 'Nicholas', 'Havilah'), (10522662, 'Connor', 'McHugh')]
+    return [(12345678, 'Kevin', 'Duong'), (10469231, 'Nicholas', 'Havilah'), (10522662, 'Connor', 'McHugh')]
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -197,6 +200,7 @@ class SokobanPuzzle(search.Problem):
     macro = False
 
     def __init__(self, warehouse, targets):
+        search.Problem.__init__(self, initial)
         self.game = warehouse
         self.targets = self.game.targets
         self.macro = macro
@@ -220,13 +224,13 @@ class SokobanPuzzle(search.Problem):
             # retrieve the current players position
             current_position = self.worker
             if self.allow_taboo_push == True:
-                if ((current_position.x+1), current_position.y) not in walls or ((current_position.x+1), current_position.y) not in taboo_cells.bad_cells:
+                if ((current_position.x+1), current_position.y) not in walls or ((current_position.x+1), current_position.y) not in taboo_cells_arr:
                     allActions.remove("R")
-                if ((current_position.x-1), current_position.y) not in walls or ((current_position.x-1), current_position.y) not in taboo_cells.bad_cells:
+                if ((current_position.x-1), current_position.y) not in walls or ((current_position.x-1), current_position.y) not in taboo_cells_arr:
                     allActions.remove("L")
-                if (current_position.x, (current_position.y+1)) not in walls or (current_position.x, (current_position.y+1)) not in taboo_cells.bad_cells:
+                if (current_position.x, (current_position.y+1)) not in walls or (current_position.x, (current_position.y+1)) not in taboo_cells_arr:
                     allActions.remove("D")
-                if (current_position.x, (current_position.y-1)) not in walls or (current_position.x, (current_position.y-1)) not in taboo_cells.bad_cells:
+                if (current_position.x, (current_position.y-1)) not in walls or (current_position.x, (current_position.y-1)) not in taboo_cells_arr:
                     allActions.remove("U")
             if self.allow_taboo_push == False:
                 # retrieve the current players position
@@ -242,13 +246,13 @@ class SokobanPuzzle(search.Problem):
             for box in self.boxes:
                 current_position = box
                 if self.allow_taboo_push == True:
-                    if ((current_position.x+1), current_position.y) not in walls or ((current_position.x+1), current_position.y) not in taboo_cells.bad_cells:
+                    if ((current_position.x+1), current_position.y) not in walls or ((current_position.x+1), current_position.y) not in taboo_cells_arr:
                         allActions.remove("R")
-                    if ((current_position.x-1), current_position.y) not in walls or ((current_position.x-1), current_position.y) not in taboo_cells.bad_cells:
+                    if ((current_position.x-1), current_position.y) not in walls or ((current_position.x-1), current_position.y) not in taboo_cells_arr:
                         allActions.remove("L")
-                    if (current_position.x, (current_position.y+1)) not in walls or (current_position.x, (current_position.y+1)) not in taboo_cells.bad_cells:
+                    if (current_position.x, (current_position.y+1)) not in walls or (current_position.x, (current_position.y+1)) not in taboo_cells_arr:
                         allActions.remove("D")
-                    if (current_position.x, (current_position.y-1)) not in walls or (current_position.x, (current_position.y-1)) not in taboo_cells.bad_cells:
+                    if (current_position.x, (current_position.y-1)) not in walls or (current_position.x, (current_position.y-1)) not in taboo_cells_arr:
                         allActions.remove("U")
                 if self.allow_taboo_push == False:
                     # retrieve the current players position
@@ -323,11 +327,27 @@ def solve_sokoban_elem(warehouse):
             For example, ['Left', 'Down', Down','Right', 'Up', 'Down']
             If the puzzle is already in a goal state, simply return []
     '''
-
-    # "INSERT YOUR CODE HERE"
-
-    raise NotImplementedError()
-
+    #empty list to store the boxes if they aren't in the goal state
+    #boxes_out_of_goal_state=[]
+    #This function defines the approximate cost of movement that will be required from manhattan distance
+    def h():
+        #check if the boxes are in the target areas or not, and if they aren't, append them to a list that we can work from
+        # for target in self.targets:
+        #     for box in self.boxes:
+        #         if box not in target:
+        #             boxes_out_of_goal_state.append("Goal Cell")
+        #             boxes_out_of_goal_state.append(target)
+        #             boxes_out_of_goal_state.append("Box To Push")
+        #             boxes_out_of_goal_state.append(box)
+        box1 = boxes[0]    
+        target1 = targets[0]
+        return manhattan_distance(box1,target1)
+    #define the problem
+    problemstate=search.Problem(initial)
+    #implement the algorithm we want to use
+    search.astar_graph_search(problemstate)
+    #print the list of actions taken
+    print(search.Node.solution(self))
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 
@@ -344,8 +364,8 @@ def can_go_there(warehouse, dst):
     '''
 
     # "INSERT YOUR CODE HERE"
-
     raise NotImplementedError()
+
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -411,6 +431,3 @@ def solve_weighted_sokoban_elem(warehouse, push_costs):
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-
-# taboo_cells("./warehouses/warehouse_57.txt")
