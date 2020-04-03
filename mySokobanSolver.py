@@ -200,15 +200,24 @@ class SokobanPuzzle(search.Problem):
     macro = False
 
     def __init__(self, warehouse, targets):
-        search.Problem.__init__(self, initial)
-        self.game = warehouse
-        self.targets = self.game.targets
-        self.macro = macro
-        self.walls = walls
-        self.boxes = boxes
-        self.worker = worker
-        self.taboo = taboo_cells(self.game)
-
+##        search.Problem.__init__(self, initial)
+##        self.game = warehouse
+##        self.targets = self.game.targets
+##        self.macro = macro
+##        self.walls = walls
+##        self.boxes = boxes
+##        self.worker = worker
+##        self.taboo = taboo_cells(self.game)
+        self.puzzle = warehouse
+        self.goal = goal
+        self.initial = initial
+        self.walls = self.puzzle.walls
+        self.boxes = self.puzzle.boxes
+        walls = warehouse.walls
+        targets = warehouse.targets
+        boxes = warehouse.boxes
+        worker=warehouse.worker
+        
     def actions(self, state):
         """
         Return the list of actions that can be executed in the given state.
@@ -274,6 +283,14 @@ class SokobanPuzzle(search.Problem):
         s_next = s[:a]+s[-1:a-1:-1]
         """
         assert action in self.actions(state)
+        if action in self.actions(state)=="L":
+            worker=worker+LEFT
+        if action in self.actions(state)=="R":
+            worker=worker+RIGHT
+        if action in self.actions(state)=="U":
+            worker=worker+UP
+        if action in self.actions(state)=="D":
+            worker=worker+DOWN
         return tuple(list(state[:action])+list(reversed(state[action:])))
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -330,11 +347,12 @@ def solve_sokoban_elem(warehouse):
     #empty list to store the boxes if they aren't in the goal state
     #boxes_out_of_goal_state=[]
     #This function defines the approximate cost of movement that will be required from manhattan distance
-    walls = warehouse.walls
-    targets = warehouse.targets
-    boxes = warehouse.boxes
-    
-    def h():
+##    walls = warehouse.walls
+##    targets = warehouse.targets
+##    boxes = warehouse.boxes
+##    worker=warehouse.worker
+##    state=walls,targets,boxes,worker
+    def hooristic():
         #check if the boxes are in the target areas or not, and if they aren't, append them to a list that we can work from
         # for target in self.targets:
         #     for box in self.boxes:
@@ -343,15 +361,24 @@ def solve_sokoban_elem(warehouse):
         #             boxes_out_of_goal_state.append(target)
         #             boxes_out_of_goal_state.append("Box To Push")
         #             boxes_out_of_goal_state.append(box)
-        box1 = boxes[0]    
-        target1 = targets[0]
+        box1 = warehouse.boxes[0]    
+        target1 = warehouse.targets[0]
         return manhattan_distance(box1,target1)
+    
     #define the problem
-    problemstate=search.Problem(initial)
+    puzzle=search.Problem(warehouse,goal=warehouse.targets)
     #implement the algorithm we want to use
-    search.astar_graph_search(problemstate)
+    search.astar_graph_search(puzzle, hooristic())
     #print the list of actions taken
-    print(search.Node.solution(self))
+    if search.Node.solution is None:
+        return []
+    else:
+        print("LENGTH:",len(search.Node.solution))
+        sols=list()
+        for coord, box, in search.Node.solution:
+              sols.append(((coord[1], coord[0]),box))
+        print("SOLUTION",sols)
+        return sols
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 
@@ -433,9 +460,10 @@ def solve_weighted_sokoban_elem(warehouse, push_costs):
 
     raise NotImplementedError()
 
-
+def main():
+    wh = sokoban.Warehouse()
+    wh.load_warehouse("./warehouses/warehouse_01.txt")
+    solve_sokoban_elem(wh)
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-wh = sokoban.Warehouse()
-wh.load_warehouse("./warehouses/warehouse_01.txt")
-solve_sokoban_elem(wh)
+if __name__=="__main__":
+    main()
