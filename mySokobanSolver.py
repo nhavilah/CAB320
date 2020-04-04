@@ -39,7 +39,7 @@ def my_team():
     of triplet of the form (student_number, first_name, last_name)
 
     '''
-    return [(12345678, 'Kevin', 'Duong'), (10469231, 'Nicholas', 'Havilah'), (10522662, 'Connor', 'McHugh')]
+    return [('09448977', 'Kevin', 'Duong'), (10469231, 'Nicholas', 'Havilah'), (10522662, 'Connor', 'McHugh')]
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -395,8 +395,15 @@ def can_go_there(warehouse, dst):
     '''
 
     # "INSERT YOUR CODE HERE"
-    raise NotImplementedError()
-
+    def heuristic():
+        box1 = warehouse.boxes[0]
+        return manhattan_distance(box1,dst)
+    puzzle = search.Problem(warehouse, goal = dst)
+    path = search.astar_tree_search(puzzle, heuristic)
+    if path is None:
+             return []
+    else:
+             return path
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
