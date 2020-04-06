@@ -83,6 +83,8 @@ def taboo_cells(warehouse):
     warehouse_height = warehouse.nrows
     walls = warehouse.walls
     targets = warehouse.targets
+    boxes=warehouse.boxes
+    player=warehouse.worker
 
     # Check for taboo cells using Rule 1
     for y in range(warehouse_height):
@@ -138,7 +140,7 @@ def taboo_cells(warehouse):
         if x > 0 and y > 0 and x < warehouse_height:
             taboo_visual += '\n'
 
-        for x in range(warehouse_height):
+        for x in range(warehouse_width):
             # Add empty spaces
             if (x, y) not in walls and (x, y) not in taboo_cells_arr:
                 taboo_visual += ' '
@@ -150,8 +152,7 @@ def taboo_cells(warehouse):
             # Add taboo cell markers
             if (x, y) in taboo_cells_arr and (x, y) not in (walls):
                 taboo_visual += 'X'
-
-    # print(taboo_visual)
+                
     return str(taboo_visual)
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -283,12 +284,14 @@ def warehouse_update(warehouse,state):
         warehouse.boxes=state
 
 class player_path(search.Problem):
+    #this class is used to find the player a path to a given location, which is usually going to be the cell next to the box it needs to push
     def __init__(self,warehouse,goal,init):
         self.problem=warehouse
         self.goal=goal
         self.initial=init
         self.walls=self.problem.walls
         self.boxes=self.problem.boxes
+        
     def actions(self,state):
         allowable_actions=list()
         for direction,move in moveset.items():
@@ -296,9 +299,11 @@ class player_path(search.Problem):
             if next_state not in self.walls and next_state not in self.boxes:
                 allowable_actions.append(direction)
         return allowable_actions
+    
     def result(self,state,actions):
         state=tuple_addition(state,moveset[actions])
         return state
+    
     def goal_test(self,state):
         return state==self.goal
     
@@ -313,15 +318,16 @@ def can_go_there(warehouse, dst):
       True if the worker can walk to cell dst=(row,column) without pushing any box
       False otherwise
     '''
-    def heuristic(self):
-        player = warehouse.worker
-        return manhattan_distance(player,dst)
+    def heuristic(n):
+        state=n.state
+        return manhattan_distance(state,dst)
+    
     puzzle = player_path(warehouse, dst,warehouse.worker)
     path = search.astar_graph_search(puzzle, heuristic)
-    if path is None:
-             return []
+    if path is not None:
+             return True
     else:
-             return path
+             return False
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -357,7 +363,7 @@ def check_elem_action_seq(warehouse, action_seq):
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
     
-def solve_sokoban_elem(warehouses):
+def solve_sokoban_elem(warehouse):
     '''    
     This function should solve using A* algorithm and elementary actions
     the puzzle defined in the parameter 'warehouse'.
@@ -395,7 +401,7 @@ def solve_sokoban_elem(warehouses):
 ##        return manhattan_distance(box1,target1)
         return 0
     #define the problem
-    puzzle=SokobanPuzzle(warehouses)
+    puzzle=SokobanPuzzle(warehouse)
     #implement the algorithm we want to use
     sol=search.astar_graph_search(puzzle,hooristic)
     if sol is None:
