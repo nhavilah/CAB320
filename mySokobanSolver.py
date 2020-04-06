@@ -47,7 +47,7 @@ def my_team():
     of triplet of the form (student_number, first_name, last_name)
 
     '''
-    return [(12345678, 'Kevin', 'Duong'), (10469231, 'Nicholas', 'Havilah'), (10522662, 'Connor', 'McHugh')]
+    return [(9448977, 'Kevin', 'Duong'), (10469231, 'Nicholas', 'Havilah'), (10522662, 'Connor', 'McHugh')]
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -185,28 +185,6 @@ def tuple_subtraction(a,b):
 def warehouse_update(warehouse,state):
         #updates the positions of elements inside the warehouse
         warehouse.boxes=state
-        
-def can_go_there(warehouse, dst):
-    '''    
-    Determine whether the worker can walk to the cell dst=(row,column) 
-    without pushing any box.
-
-    @param warehouse: a valid Warehouse object
-
-    @return
-      True if the worker can walk to cell dst=(row,column) without pushing any box
-      False otherwise
-    '''
-    def heuristic(self):
-        player = warehouse.worker
-        return manhattan_distance(player,dst)
-    puzzle = SokobanPuzzle((warehouse,warehouse.worker,warehouse.targets), goal = dst)
-    path = search.astar_graph_search(puzzle, heuristic)
-    if path is None:
-             return []
-    else:
-             return path
-
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 class SokobanPuzzle(search.Problem):
     '''
@@ -244,6 +222,7 @@ class SokobanPuzzle(search.Problem):
         boxes = warehouse.boxes
         worker = warehouse.worker
         goal=self.targets
+        goal=warehouse.targets
         self.initial = (warehouse.worker, tuple(self.puzzle.boxes))
         
     def actions(self, state):
@@ -254,7 +233,7 @@ class SokobanPuzzle(search.Problem):
         'self.allow_taboo_push' and 'self.macro' should be tested to determine
         what type of list of actions is to be returned.
         """
-        wokrer,box_pos=state
+        worker,box_pos=state
         allowable_actions=[]
         warehouse_update(self.puzzle,state)
         if self.macro:
@@ -302,7 +281,27 @@ class SokobanPuzzle(search.Problem):
 def warehouse_update(warehouse,state):
         #updates the positions of elements inside the warehouse
         warehouse.boxes=state
-        
+
+class player_path(search.Problem):
+    def __init__(self,warehouse,goal,init):
+        self.problem=warehouse
+        self.goal=goal
+        self.initial=init
+        self.walls=self.problem.walls
+        self.boxes=self.problem.boxes
+    def actions(self,state):
+        allowable_actions=list()
+        for direction,move in moveset.items():
+            next_state=tuple_addition(state,move)
+            if next_state not in self.walls and next_state not in self.boxes:
+                allowable_actions.append(direction)
+        return allowable_actions
+    def result(self,state,actions):
+        state=tuple_addition(state,moveset[actions])
+        return state
+    def goal_test(self,state):
+        return state==self.goal
+    
 def can_go_there(warehouse, dst):
     '''    
     Determine whether the worker can walk to the cell dst=(row,column) 
@@ -317,7 +316,7 @@ def can_go_there(warehouse, dst):
     def heuristic(self):
         player = warehouse.worker
         return manhattan_distance(player,dst)
-    puzzle = SokobanPuzzle((warehouse.targets,warehouse.worker), goal = dst)
+    puzzle = player_path(warehouse, dst,warehouse.worker)
     path = search.astar_graph_search(puzzle, heuristic)
     if path is None:
              return []
