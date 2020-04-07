@@ -185,7 +185,7 @@ def tuple_subtraction(a,b):
 
 def warehouse_update(warehouse,state):
         #updates the positions of elements inside the warehouse
-        warehouse.boxes=state
+        warehouse.boxes=state[1]
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 class SokobanPuzzle(search.Problem):
     '''
@@ -213,18 +213,24 @@ class SokobanPuzzle(search.Problem):
     allow_taboo_push = True
     macro = True
 
-    def __init__(self, warehouse,goal=None,worker=None):
+    def __init__(self, warehouse):
+##        self.puzzle = warehouse
+##        self.goal = warehouse.targets
+##        self.initial = warehouse.worker
+##        self.walls = warehouse.walls
+##        self.boxes = warehouse.boxes
+##        self.targets = warehouse.targets
+##        boxes = warehouse.boxes
+##        worker = warehouse.worker
+##        goal=self.targets
+##        goal=warehouse.targets
+##        self.initial = (warehouse.worker, tuple(self.puzzle.boxes))
+
         self.puzzle = warehouse
-        self.goal = warehouse.targets
-        self.initial = warehouse.worker
-        self.walls = warehouse.walls
-        self.boxes = warehouse.boxes
-        self.targets = warehouse.targets
-        boxes = warehouse.boxes
-        worker = warehouse.worker
-        goal=self.targets
-        goal=warehouse.targets
+        self.goal = self.puzzle.targets
         self.initial = (warehouse.worker, tuple(self.puzzle.boxes))
+        self.boxes = self.puzzle.boxes
+        self.walls = self.puzzle.walls
         
     def actions(self, state):
         """
@@ -237,23 +243,25 @@ class SokobanPuzzle(search.Problem):
         worker,box_pos=state
         allowable_actions=[]
         warehouse_update(self.puzzle,state)
-        if self.macro:
-            if self.allow_taboo_push:
-                for box in box_pos:
-                    for direction,move in moveset.items():
-                        next_state=tuple_addition(box,move)
-                        pushers_position=tuple_subtraction(box,move)
-                        if next_state not in self.walls and next_state not in box_pos:
-                            if can_go_there(self.puzzle,pushers_position):
-                                allowable_actions.append((box,direction))
-            else:
-                for box in box_pos:
-                    for direction,move in moveset.items():
-                        next_state=tuple_addition(box,move)
-                        pushers_position=tuple_subtraction(box,move)
-                        if next_state not in self.walls and next_state not in box_pos and next_state not in taboo_cells_arr:
-                            if can_go_there(self.puzzle,pushers_position):
-                                allowable_actions.append((box,direction))
+##        if self.macro:
+##            if self.allow_taboo_push:
+##                for box in box_pos:
+##                    for direction,move in moveset.items():
+##                        next_state=tuple_addition(box,move)
+##                        pushers_position=tuple_subtraction(box,move)
+##                        if next_state not in self.walls and next_state not in box_pos:
+##                            if can_go_there(self.puzzle,pushers_position):
+##                                allowable_actions.append((box,direction))
+##            else:
+        for box in box_pos:
+            for direction,move in moveset.items():
+                next_state=tuple_addition(box,move)
+##                pushers_position=tuple_subtraction(box,move)
+##                [a,b]=pushers_position
+##                pushers_position=(b,a)
+                if next_state not in self.puzzle.walls and next_state not in box_pos and next_state not in taboo_cells_arr:
+                    if can_go_there(self.puzzle,box):
+                        allowable_actions.append((box,direction))
         return allowable_actions
     
     def result(self, state, actions):
@@ -277,6 +285,10 @@ class SokobanPuzzle(search.Problem):
     #need this otherwise the algorithm returns None because there's no actual check implemented
     def goal_test(self,state):
         return set(state[1])==set(self.goal)
+
+    #define a heuristic to satisfy the conditions of astar_graph_search because for some reason it asks for h or problem.h
+##    def h():
+##        return 0
                 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 def warehouse_update(warehouse,state):
@@ -285,12 +297,12 @@ def warehouse_update(warehouse,state):
 
 class player_path(search.Problem):
     #this class is used to find the player a path to a given location, which is usually going to be the cell next to the box it needs to push
-    def __init__(self,warehouse,goal,init):
-        self.problem=warehouse
-        self.goal=goal
-        self.initial=init
-        self.walls=self.problem.walls
-        self.boxes=self.problem.boxes
+    def __init__(self,warehouse,goal,initial):
+        self.puzzle = warehouse
+        self.goal = goal
+        self.initial = initial
+        self.walls = self.puzzle.walls
+        self.boxes = self.puzzle.boxes
         
     def actions(self,state):
         allowable_actions=list()
@@ -307,6 +319,7 @@ class player_path(search.Problem):
     def goal_test(self,state):
         return state==self.goal
     
+    
 def can_go_there(warehouse, dst):
     '''    
     Determine whether the worker can walk to the cell dst=(row,column) 
@@ -318,17 +331,17 @@ def can_go_there(warehouse, dst):
       True if the worker can walk to cell dst=(row,column) without pushing any box
       False otherwise
     '''
+    [a,b]=dst
+    dst=(b,a)
     def heuristic(n):
         state=n.state
         return manhattan_distance(state,dst)
-    
     puzzle = player_path(warehouse, dst,warehouse.worker)
     path = search.astar_graph_search(puzzle, heuristic)
-    if path is not None:
-             return True
-    else:
+    if path is None:
              return False
-
+    else:
+             return True
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 
@@ -379,14 +392,31 @@ def solve_sokoban_elem(warehouse):
             For example, ['Left', 'Down', Down','Right', 'Up', 'Down']
             If the puzzle is already in a goal state, simply return []
     '''
-    #empty list to store the boxes if they aren't in the goal state
-    #boxes_out_of_goal_state=[]
-    #This function defines the approximate cost of movement that will be required from manhattan distance
-##    walls = warehouse.walls
-##    targets = warehouse.targets
-##    boxes = warehouse.boxes
-   ## worker=warehouses.worker
-##    state=walls,targets,boxes,worker
+    
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+def solve_sokoban_macro(warehouse):
+    '''    
+    Solve using using A* algorithm and macro actions the puzzle defined in 
+    the parameter 'warehouse'. 
+
+    A sequence of macro actions should be 
+    represented by a list M of the form
+            [ ((r1,c1), a1), ((r2,c2), a2), ..., ((rn,cn), an) ]
+    For example M = [ ((3,4),'Left') , ((5,2),'Up'), ((12,4),'Down') ] 
+    means that the worker first goes the box at row 3 and column 4 and pushes it left,
+    then goes to the box at row 5 and column 2 and pushes it up, and finally
+    goes the box at row 12 and column 4 and pushes it down.
+
+    In this scenario, the cost of all (macro) actions is one unit. 
+
+    @param warehouse: a valid Warehouse object
+
+    @return
+        If the puzzle cannot be solved return the string 'Impossible'
+        Otherwise return M a sequence of macro actions that solves the puzzle.
+        If the puzzle is already in a goal state, simply return []
+    '''
     def hooristic(self):
 ##        #check if the boxes are in the target areas or not, and if they aren't, append them to a list that we can work from
 ##        # for target in self.targets:
@@ -412,41 +442,6 @@ def solve_sokoban_elem(warehouse):
             solution.append(((box, coord[0],coord[1])))
         print("SOLUTION", solution)
         return solution
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-
-
-
-
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-
-def solve_sokoban_macro(warehouse):
-    '''    
-    Solve using using A* algorithm and macro actions the puzzle defined in 
-    the parameter 'warehouse'. 
-
-    A sequence of macro actions should be 
-    represented by a list M of the form
-            [ ((r1,c1), a1), ((r2,c2), a2), ..., ((rn,cn), an) ]
-    For example M = [ ((3,4),'Left') , ((5,2),'Up'), ((12,4),'Down') ] 
-    means that the worker first goes the box at row 3 and column 4 and pushes it left,
-    then goes to the box at row 5 and column 2 and pushes it up, and finally
-    goes the box at row 12 and column 4 and pushes it down.
-
-    In this scenario, the cost of all (macro) actions is one unit. 
-
-    @param warehouse: a valid Warehouse object
-
-    @return
-        If the puzzle cannot be solved return the string 'Impossible'
-        Otherwise return M a sequence of macro actions that solves the puzzle.
-        If the puzzle is already in a goal state, simply return []
-    '''
-
-    # "INSERT YOUR CODE HERE"
-
-    raise NotImplementedError()
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -482,9 +477,9 @@ def solve_weighted_sokoban_elem(warehouse, push_costs):
 
 def main():
     wh = sokoban.Warehouse()
-    wh.load_warehouse("./warehouses/warehouse_01.txt")
+    wh.load_warehouse("./warehouses/cab320_warehouse_8.txt")
     taboo_cells(wh)
-    solve_sokoban_elem(wh)
+    solve_sokoban_macro(wh)
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 if __name__=="__main__":
     main()
