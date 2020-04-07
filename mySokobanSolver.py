@@ -442,7 +442,7 @@ def solve_sokoban_macro(warehouse):
     else:
         solution=list()
         for coord, box in sol.solution():
-            solution.append(((box, coord[0],coord[1])))
+            solution.append(((coord[1],coord[0]),box))
         print("SOLUTION", solution)
         return solution
 
