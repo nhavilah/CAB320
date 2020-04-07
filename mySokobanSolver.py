@@ -178,9 +178,12 @@ def manhattan_distance(coords_a, coords_b):
     return manhattan
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 def tuple_addition(a,b):
-    return (a[0] + b[0], a[1] + b[1])
+    added = (a[0] + b[0], a[1] + b[1])
+    return added
+
 def tuple_subtraction(a,b):
-    return (a[0] - b[0],a[1] -b[1])
+    subtracted = (a[0] - b[0], a[1] - b[1])
+    return subtracted
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 def warehouse_update(warehouse,state):
