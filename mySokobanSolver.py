@@ -256,11 +256,11 @@ class SokobanPuzzle(search.Problem):
         for box in box_pos:
             for direction,move in moveset.items():
                 next_state=tuple_addition(box,move)
-##                pushers_position=tuple_subtraction(box,move)
-##                [a,b]=pushers_position
-##                pushers_position=(b,a)
+                pushers_position=tuple_subtraction(box,move)
+                [a,b]=pushers_position
+                pushers_position=(b,a)
                 if next_state not in self.puzzle.walls and next_state not in box_pos and next_state not in taboo_cells_arr:
-                    if can_go_there(self.puzzle,box):
+                    if can_go_there(self.puzzle,pushers_position):
                         allowable_actions.append((box,direction))
         return allowable_actions
     
@@ -292,8 +292,9 @@ class SokobanPuzzle(search.Problem):
                 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 def warehouse_update(warehouse,state):
-        #updates the positions of elements inside the warehouse
-        warehouse.boxes=state
+    #updates the positions of elements inside the warehouse
+    warehouse.boxes=state[1]
+    warehouse.worker=state[0]
 
 class player_path(search.Problem):
     #this class is used to find the player a path to a given location, which is usually going to be the cell next to the box it needs to push
@@ -318,7 +319,9 @@ class player_path(search.Problem):
     
     def goal_test(self,state):
         return state==self.goal
-    
+
+    def h(self):
+        return 0
     
 def can_go_there(warehouse, dst):
     '''    
@@ -477,7 +480,7 @@ def solve_weighted_sokoban_elem(warehouse, push_costs):
 
 def main():
     wh = sokoban.Warehouse()
-    wh.load_warehouse("./warehouses/cab320_warehouse_8.txt")
+    wh.load_warehouse("./warehouses/warehouse_01.txt")
     taboo_cells(wh)
     solve_sokoban_macro(wh)
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
