@@ -4,3 +4,4 @@ __pycache__
 # VS Code specific files
 *.code-workspace
 .vscode/
+my_solver.py

@@ -35,6 +35,7 @@ moveset = {
 }
 
 taboo_cells_arr = []
+
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 
@@ -232,6 +233,7 @@ def warehouse_update(warehouse, state):
 
     '''
     warehouse.boxes = state[1]
+
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 
@@ -322,67 +324,70 @@ class SokobanPuzzle(search.Problem):
         return set(state[1]) == set(self.goal)
 
     # define a heuristic to satisfy the conditions of astar_graph_search because for some reason it asks for h or problem.h
-    def h(self,n):
-            return heuristic(self,n)
+    def h(self, n):
+        return heuristic(self, n)
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-def heuristic(problem,node):
+
+
+def heuristic(problem, node):
     #assert len(node.state[1])==len(problem.goal)
-    #returns the average of:
-    #1) The distance between the player and the closest box
-    #2) The average distance between boxes and their closest targets
-    #step 1 is to define the variables
-    worker=node.state[0]
-    boxes=list(node.state[1])
-    targets=list(problem.goal)
-    #step 2 is to calculate the distance between  player and the closest box
-    #create an array to store the distances between the player and each box
-    distances=[]
-    #add each distance to the array
+    # returns the average of:
+    # 1) The distance between the player and the closest box
+    # 2) The average distance between boxes and their closest targets
+    # step 1 is to define the variables
+    worker = node.state[0]
+    boxes = list(node.state[1])
+    targets = list(problem.goal)
+    # step 2 is to calculate the distance between  player and the closest box
+    # create an array to store the distances between the player and each box
+    distances = []
+    # add each distance to the array
     for box in boxes:
-        distances.append(manhattan_distance(worker,box))
-    #find out the closest distance
-    closest_distance=min(distances)
-    #step 3 is to find the distance between each box and its closest target
-    #create an array to store the distance between each box and its closest target
-    box_distances=[]
-    #find out the distance between each box its closest target
+        distances.append(manhattan_distance(worker, box))
+    # find out the closest distance
+    closest_distance = min(distances)
+    # step 3 is to find the distance between each box and its closest target
+    # create an array to store the distance between each box and its closest target
+    box_distances = []
+    # find out the distance between each box its closest target
     for box in boxes:
-        #store the distance between the box and each target
-        box_to_targets_distance=[]
+        # store the distance between the box and each target
+        box_to_targets_distance = []
         for target in targets:
-            box_to_targets_distance.append(manhattan_distance(box,target))
-        closest_target_to_box_distance=min(box_to_targets_distance)
+            box_to_targets_distance.append(manhattan_distance(box, target))
+        closest_target_to_box_distance = min(box_to_targets_distance)
         box_distances.append(closest_target_to_box_distance)
-    #find the average distance between boxes and their closest targets
-    average_distance_boxes_to_targets=sum(box_distances)/len(box_distances)
-    #step 4 is to find the average of the previous 2 steps
-    heuristic_distance=(closest_distance+average_distance_boxes_to_targets)/2
+    # find the average distance between boxes and their closest targets
+    average_distance_boxes_to_targets = sum(box_distances)/len(box_distances)
+    # step 4 is to find the average of the previous 2 steps
+    heuristic_distance = (closest_distance+average_distance_boxes_to_targets)/2
     return heuristic_distance
-##    boxes=list(node.state[1])
-##    targets=list(problem.goal)
-##    player=node.state[0]
-##    #distance value to be returned from the heuristic
-##    total_distance=0
-##    #find distance from box to closest target
-##    minBoxDistance=float('inf')
-##    currentMinBox=boxes[0]
-##    currentMinTarget=targets[0]
-##    for box in boxes:
-##        for target in targets:
-##            distanceToTarget=manhattan_distance(box,target)
-##            if distanceToTarget < minBoxDistance:
-##                minBoxDistance=distanceToTarget
-##    total_distance+=minBoxDistance
-##    #distance from player to closest box
-##    minPlayerDistance=float('inf')
-##    for box in boxes:
-##        distanceToPlayer=manhattan_distance(player,box)
-##        if distanceToPlayer < minPlayerDistance:
-##            minPlayerDistance=distanceToPlayer
-##    total_distance+=minPlayerDistance
-##    return total_distance
-    
+# boxes=list(node.state[1])
+# targets=list(problem.goal)
+# player=node.state[0]
+# distance value to be returned from the heuristic
+# total_distance=0
+# find distance from box to closest target
+# minBoxDistance=float('inf')
+# currentMinBox=boxes[0]
+# currentMinTarget=targets[0]
+# for box in boxes:
+# for target in targets:
+# distanceToTarget=manhattan_distance(box,target)
+# if distanceToTarget < minBoxDistance:
+# minBoxDistance=distanceToTarget
+# total_distance+=minBoxDistance
+# distance from player to closest box
+# minPlayerDistance=float('inf')
+# for box in boxes:
+# distanceToPlayer=manhattan_distance(player,box)
+# if distanceToPlayer < minPlayerDistance:
+# minPlayerDistance=distanceToPlayer
+# total_distance+=minPlayerDistance
+# return total_distance
+
+
 def warehouse_update(warehouse, state):
     # updates the positions of elements inside the warehouse
     warehouse.boxes = state[1]
@@ -404,7 +409,7 @@ class player_path(search.Problem):
 
     def actions(self, state):
         allowable_actions = list()
-        for direction, move  in moveset.items():
+        for direction, move in moveset.items():
             next_state = tuple_addition(state, move)
             if next_state not in self.walls and next_state not in self.boxes:
                 allowable_actions.append(direction)
@@ -471,8 +476,69 @@ def check_elem_action_seq(warehouse, action_seq):
                string returned by the method  Warehouse.__str__()
     '''
 
-    # "INSERT YOUR CODE HERE"
-    raise NotImplementedError()
+    worker = warehouse.worker
+    walls = warehouse.walls
+    boxes = warehouse.boxes
+
+    (x, y) = worker
+
+    for action in action_seq:
+        if (action == 'Down'):
+            if ((x, y + 1) in walls):
+                return 'Impossible'
+                break
+
+            elif ((x, y + 1) in boxes and (x, y + 2) in (walls or boxes)):
+                return 'Impossible'
+                break
+
+            else:
+                (x, y) = (x, y + 1)
+                worker = (x, y)
+
+        elif (action == 'Up'):
+            if ((x, y - 1) in walls):
+                return 'Impossible'
+                break
+
+            elif ((x, y - 1) in boxes and (x, y - 2) in (walls or boxes)):
+                return 'Impossible'
+                break
+
+            else:
+                (x, y) = (x, y - 1)
+                worker = (x, y)
+
+        elif (action == 'Right'):
+            if ((x + 1, y) in walls):
+                return 'Impossible'
+                break
+
+            elif ((x + 1, y) in boxes and (x + 2, y) in (walls or boxes)):
+                return 'Impossible'
+                break
+
+            else:
+                (x, y) = (x + 1, y)
+                worker = (x, y)
+
+        elif (action == 'Left'):
+            if ((x - 1, y) in walls):
+                return 'Impossible'
+                break
+
+            elif ((x - 1, y) in boxes and (x - 2, y) in (walls or boxes)):
+                return 'Impossible'
+                break
+
+            else:
+                (x, y) = (x - 1, y)
+                worker = (x, y)
+                
+        new_warehouse = warehouse
+        new_warehouse.worker = worker
+    
+    return str(new_warehouse)
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
