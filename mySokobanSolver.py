@@ -26,7 +26,7 @@ import sokoban
 
 
 # Useful Variables
-
+player_path=[]
 moveset = {
     'Up': (0, -1),
     'Down': (0, 1),
@@ -35,7 +35,6 @@ moveset = {
 }
 
 taboo_cells_arr = []
-
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 
@@ -233,7 +232,6 @@ def warehouse_update(warehouse, state):
 
     '''
     warehouse.boxes = state[1]
-
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 
@@ -260,8 +258,8 @@ class SokobanPuzzle(search.Problem):
     return elementary actions.        
     '''
 
-    allow_taboo_push = True
-    macro = True
+    allow_taboo_push = False
+    macro = False
 
     def __init__(self, warehouse):
         self.puzzle = warehouse
@@ -280,25 +278,61 @@ class SokobanPuzzle(search.Problem):
         'self.allow_taboo_push' and 'self.macro' should be tested to determine
         what type of list of actions is to be returned.
         """
-
         # Variable definitions
         (worker, box_pos) = state
         allowable_actions = []
-
-        # Update the warehouse state
-        warehouse_update(self.puzzle, state)
-
-        for box in box_pos:
-            for direction, move in moveset.items():
-                next_pos = tuple_addition(box, move)
-                pushers_pos = tuple_subtraction(box, move)
-                [a, b] = pushers_pos
-                pushers_pos = (b, a)
-
-                if next_pos not in (self.walls and box_pos and taboo_cells_arr):
-                    if can_go_there(self.puzzle, pushers_pos):
-                        allowable_actions.append((box, direction))
-
+        #this part is used for macro actions
+        if self.macro==True:
+            # Update the warehouse state
+            warehouse_update(self.puzzle, state)
+            #this allows us to (unwisely) push boxes into taboo cells
+            if self.allow_taboo_push==False:
+                for box in box_pos:
+                    for direction, move in moveset.items():
+                        next_pos = tuple_addition(box, move)
+                        pushers_pos = tuple_subtraction(box, move)
+                        #convert these to match the format provided by sanity_checker, otherwise it won't work properly
+                        [a, b] = pushers_pos
+                        pushers_pos = (b, a)
+                        if next_pos not in (self.walls and box_pos and taboo_cells_arr) and can_go_there(self.puzzle, pushers_pos):
+                                allowable_actions.append((box, direction))
+            #this prevents us from pushing boxes into taboo cells
+            else:
+                for box in box_pos:
+                    for direction, move in moveset.items():
+                        next_pos = tuple_addition(box, move)
+                        pushers_pos = tuple_subtraction(box, move)
+                        #convert these to match the format provided by sanity_checker, otherwise it won't work properly
+                        [a, b] = pushers_pos
+                        pushers_pos = (b, a)
+                        if next_pos not in (self.walls and box_pos) and can_go_there(self.puzzle, pushers_pos):
+                                allowable_actions.append((box, direction))
+        #this part is used for elementary actions
+        else:
+            if self.allow_taboo_push==False:
+                for direction,move in moveset.items():
+                    #move the player
+                    worker_next_pos=tuple_addition(worker,move)
+                    box_next_pos=tuple_addition(worker_next_pos,move)
+                    #check player isn't pushing into a wall
+                    if worker_next_pos not in self.walls:
+                        if worker_next_pos in box_pos:
+                            if box_next_pos not in self.walls and box_next_pos not in box_pos and box_next_pos not in taboo_cells_arr:
+                                allowable_actions.append(direction)
+                        else:
+                            allowable_actions.append(direction)
+            else:
+                for direction,move in moveset.items():
+                    #move the player
+                    worker_next_pos=tuple_addition(worker,move)
+                    box_next_pos=tuple_addition(worker_next_pos,move)
+                    #check player isn't pushing into a wall
+                    if worker_next_pos not in self.walls:
+                        if worker_next_pos in box_pos:
+                            if box_next_pos not in self.walls and box_next_pos not in box_pos:
+                                allowable_actions.append(direction)
+                        else:
+                            allowable_actions.append(direction)
         return allowable_actions
 
     def result(self, state, actions):
@@ -317,76 +351,59 @@ class SokobanPuzzle(search.Problem):
             updated_box = tuple_addition(actions[0], moveset[actions[1]])
             boxes[boxes.index(actions[0])] = updated_box
             boxes = tuple(boxes)
-            return (worker, boxes)
+        else:
+            worker=state[0]
+            boxes=state[1]
+            boxes=list(boxes)
+            new_worker_pos=tuple_addition(worker,moveset[actions])
+            if new_worker_pos in boxes:
+                boxes[boxes.index(new_worker_pos)]=tuple_addition(new_worker_pos,moveset[actions])
+            worker=new_worker_pos
+            boxes=tuple(boxes)
+        return (worker, boxes)
 
     # need this otherwise the algorithm returns None because there's no actual check implemented
     def goal_test(self, state):
         return set(state[1]) == set(self.goal)
 
     # define a heuristic to satisfy the conditions of astar_graph_search because for some reason it asks for h or problem.h
-    def h(self, n):
-        return heuristic(self, n)
+    def h(self,n):
+        return heuristic(self,n)
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-
-def heuristic(problem, node):
+def heuristic(problem,node):
     #assert len(node.state[1])==len(problem.goal)
-    # returns the average of:
-    # 1) The distance between the player and the closest box
-    # 2) The average distance between boxes and their closest targets
-    # step 1 is to define the variables
-    worker = node.state[0]
-    boxes = list(node.state[1])
-    targets = list(problem.goal)
-    # step 2 is to calculate the distance between  player and the closest box
-    # create an array to store the distances between the player and each box
-    distances = []
-    # add each distance to the array
+    #returns the average of:
+    #1) The distance between the player and the closest box
+    #2) The average distance between boxes and their closest targets
+    #step 1 is to define the variables
+    worker=node.state[0]
+    boxes=list(node.state[1])
+    targets=list(problem.goal)
+    #step 2 is to calculate the distance between  player and the closest box
+    #create an array to store the distances between the player and each box
+    distances=[]
+    #add each distance to the array
     for box in boxes:
-        distances.append(manhattan_distance(worker, box))
-    # find out the closest distance
-    closest_distance = min(distances)
-    # step 3 is to find the distance between each box and its closest target
-    # create an array to store the distance between each box and its closest target
-    box_distances = []
-    # find out the distance between each box its closest target
+        distances.append(manhattan_distance(worker,box))
+    #find out the closest distance
+    closest_distance=min(distances)
+    #step 3 is to find the distance between each box and its closest target
+    #create an array to store the distance between each box and its closest target
+    box_distances=[]
+    #find out the distance between each box its closest target
     for box in boxes:
-        # store the distance between the box and each target
-        box_to_targets_distance = []
+        #store the distance between the box and each target
+        box_to_targets_distance=[]
         for target in targets:
-            box_to_targets_distance.append(manhattan_distance(box, target))
-        closest_target_to_box_distance = min(box_to_targets_distance)
+            box_to_targets_distance.append(manhattan_distance(box,target))
+        closest_target_to_box_distance=min(box_to_targets_distance)
         box_distances.append(closest_target_to_box_distance)
-    # find the average distance between boxes and their closest targets
-    average_distance_boxes_to_targets = sum(box_distances)/len(box_distances)
-    # step 4 is to find the average of the previous 2 steps
-    heuristic_distance = (closest_distance+average_distance_boxes_to_targets)/2
+    #find the average distance between boxes and their closest targets
+    average_distance_boxes_to_targets=sum(box_distances)/len(box_distances)
+    #step 4 is to find the average of the previous 2 steps
+    heuristic_distance=(closest_distance+average_distance_boxes_to_targets)/2
     return heuristic_distance
-# boxes=list(node.state[1])
-# targets=list(problem.goal)
-# player=node.state[0]
-# distance value to be returned from the heuristic
-# total_distance=0
-# find distance from box to closest target
-# minBoxDistance=float('inf')
-# currentMinBox=boxes[0]
-# currentMinTarget=targets[0]
-# for box in boxes:
-# for target in targets:
-# distanceToTarget=manhattan_distance(box,target)
-# if distanceToTarget < minBoxDistance:
-# minBoxDistance=distanceToTarget
-# total_distance+=minBoxDistance
-# distance from player to closest box
-# minPlayerDistance=float('inf')
-# for box in boxes:
-# distanceToPlayer=manhattan_distance(player,box)
-# if distanceToPlayer < minPlayerDistance:
-# minPlayerDistance=distanceToPlayer
-# total_distance+=minPlayerDistance
-# return total_distance
-
 
 def warehouse_update(warehouse, state):
     # updates the positions of elements inside the warehouse
@@ -399,7 +416,6 @@ class player_path(search.Problem):
     This class is used to determine a path from the player to a given location. This location will, in most
     cases, be the location next to the box that the player needs to move
     '''
-
     def __init__(self, warehouse, goal, initial):
         self.puzzle = warehouse
         self.goal = goal
@@ -409,7 +425,7 @@ class player_path(search.Problem):
 
     def actions(self, state):
         allowable_actions = list()
-        for direction, move in moveset.items():
+        for direction, move  in moveset.items():
             next_state = tuple_addition(state, move)
             if next_state not in self.walls and next_state not in self.boxes:
                 allowable_actions.append(direction)
@@ -423,7 +439,7 @@ class player_path(search.Problem):
         return state == self.goal
 
     def h(self):
-        return 0
+        return manhattan_distance(self.worker,self.goal)
 
 
 def can_go_there(warehouse, dst):
@@ -475,7 +491,6 @@ def check_elem_action_seq(warehouse, action_seq):
                the sequence of actions.  This must be the same string as the
                string returned by the method  Warehouse.__str__()
     '''
-
     worker = warehouse.worker
     walls = warehouse.walls
     boxes = warehouse.boxes
@@ -560,7 +575,17 @@ def solve_sokoban_elem(warehouse):
             For example, ['Left', 'Down', Down','Right', 'Up', 'Down']
             If the puzzle is already in a goal state, simply return []
     '''
-
+    # define the problem
+    puzzle = SokobanPuzzle(warehouse)
+    #set the macro bool to True
+    puzzle.macro=False
+    # implement the algorithm we want to use
+    sol = search.astar_graph_search(puzzle, puzzle.h)
+    if sol is None:
+        return 'Impossible'
+    else:
+        return sol.solution()
+    
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 
@@ -588,14 +613,18 @@ def solve_sokoban_macro(warehouse):
     '''
     # define the problem
     puzzle = SokobanPuzzle(warehouse)
+    #set the macro bool to True
+    puzzle.macro=True
+    puzzle.allow_taboo_push=False
     # implement the algorithm we want to use
     sol = search.astar_graph_search(puzzle, puzzle.h)
     if sol is None:
-        return 'Impossible'
+        return ['Impossible']
     else:
         solution_arr = []
         for coord, box in sol.solution():
             solution_arr.append(((coord[1], coord[0]), box))
+        print(solution_arr)
         return solution_arr
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
