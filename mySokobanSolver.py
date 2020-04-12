@@ -385,7 +385,6 @@ class SokobanPuzzle(search.Problem):
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 def heuristic(problem,node):
-    #assert len(node.state[1])==len(problem.goal)
     #returns the average of:
     #1) The distance between the player and the closest box
     #2) The average distance between boxes and their closest targets
@@ -595,6 +594,8 @@ def solve_sokoban_elem(warehouse):
     puzzle = SokobanPuzzle(warehouse)
     #set the macro bool to True
     puzzle.macro=False
+    puzzle.allow_taboo_push=False
+    puzzle.weighted=False
     # implement the algorithm we want to use
     sol = search.astar_graph_search(puzzle, puzzle.h)
     if sol is None:
@@ -632,6 +633,7 @@ def solve_sokoban_macro(warehouse):
     #set the macro bool to True
     puzzle.macro=True
     puzzle.allow_taboo_push=False
+    puzzle.weighted=False
     # implement the algorithm we want to use
     sol = search.astar_graph_search(puzzle, puzzle.h)
     if sol is None:
@@ -679,6 +681,7 @@ def solve_weighted_sokoban_elem(warehouse, push_costs):
     puzzle = SokobanPuzzle(warehouse)
     #set the macro bool to True
     puzzle.macro=False
+    puzzle.allow_taboo_push=False
     puzzle.weighted=True
     # implement the algorithm we want to use
     sol = search.astar_graph_search(puzzle, puzzle.h)
