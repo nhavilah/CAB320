@@ -26,14 +26,13 @@ import sokoban
 
 
 # Useful Variables
-player_path=[]
 moveset = {
     'Up': (0, -1),
     'Down': (0, 1),
     'Left': (-1, 0),
     'Right': (1, 0)
 }
-
+costs=[]
 taboo_cells_arr = []
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -260,6 +259,7 @@ class SokobanPuzzle(search.Problem):
 
     allow_taboo_push = False
     macro = False
+    weighted = False
 
     def __init__(self, warehouse):
         self.puzzle = warehouse
@@ -370,6 +370,19 @@ class SokobanPuzzle(search.Problem):
     def h(self,n):
         return heuristic(self,n)
 
+    #define the path cost(used for the weighted solver(note this bit is lifted from search.py and then modified)
+    def path_cost(self,c,state1,action,state2):
+        if self.weighted==False:
+            return c+1
+        else:
+            player_initial=state1[0]
+            boxes=state1[1]
+            player_final=tuple_addition(player_initial,moveset[action])
+            if player_final in boxes:
+                return c + costs[boxes.index(player_final)]
+            else:
+                return c+1
+
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 def heuristic(problem,node):
     #assert len(node.state[1])==len(problem.goal)
@@ -405,6 +418,9 @@ def heuristic(problem,node):
     heuristic_distance=(closest_distance+average_distance_boxes_to_targets)/2
     return heuristic_distance
 
+
+#---------------------------------------------------------------------------------------------------------------------------
+    
 def warehouse_update(warehouse, state):
     # updates the positions of elements inside the warehouse
     warehouse.boxes = state[1]
@@ -624,7 +640,6 @@ def solve_sokoban_macro(warehouse):
         solution_arr = []
         for coord, box in sol.solution():
             solution_arr.append(((coord[1], coord[0]), box))
-        print(solution_arr)
         return solution_arr
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -656,17 +671,19 @@ def solve_weighted_sokoban_elem(warehouse, push_costs):
             For example, ['Left', 'Down', Down','Right', 'Up', 'Down']
             If the puzzle is already in a goal state, simply return []
     '''
-
-    raise NotImplementedError()
-
-
-def main():
-    wh = sokoban.Warehouse()
-    wh.load_warehouse("./warehouses/warehouse_01.txt")
-    taboo_cells(wh)
-    solve_sokoban_macro(wh)
-
-
+    #add the push costs to a global variable so the path costs can be used by the puzzle class
+    for cost in push_costs:
+        costs.append(cost)
+    print(costs)
+    # define the problem
+    puzzle = SokobanPuzzle(warehouse)
+    #set the macro bool to True
+    puzzle.macro=False
+    puzzle.weighted=True
+    # implement the algorithm we want to use
+    sol = search.astar_graph_search(puzzle, puzzle.h)
+    if sol is None:
+        return 'Impossible'
+    else:
+        return sol.solution()
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-if __name__ == "__main__":
-    main()
