@@ -161,18 +161,18 @@ def test_solve_weighted_sokoban_elem():
         print(fcn.__name__, ' different answer!  :-(\n')
         print('Expected ');print(expected_answer)
         print('But, received ');print(answer)
-        print('Your answer is different but it might still be correct')
+        print('\nYour answer is different but it might still be correct')
         print('Check that you pushed the right box onto the left target!')
         
     
 
 if __name__ == "__main__":
     pass    
-    # print(my_team())  # should print your team
+    print(my_team())  # should print your team
 
-    # test_taboo_cells() 
+    test_taboo_cells() 
     test_check_elem_action_seq()
-    # test_solve_sokoban_elem()
-    # test_can_go_there()
-    # test_solve_sokoban_macro()   
-    # test_solve_weighted_sokoban_elem()
+    test_solve_sokoban_elem()
+    test_can_go_there()
+    test_solve_sokoban_macro()   
+    test_solve_weighted_sokoban_elem()
