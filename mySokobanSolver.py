@@ -73,7 +73,7 @@ def taboo_cells(warehouse):
     # Variables
     global taboo_cells
     taboo_visual = ''
-
+    taboo_cells_arr = []
     # Assign easier variable names to properties from the sokoban file
     warehouse_width = warehouse.ncols
     warehouse_height = warehouse.nrows
@@ -148,7 +148,7 @@ def taboo_cells(warehouse):
             # Add taboo cell markers
             if (x, y) in taboo_cells_arr and (x, y) not in (walls):
                 taboo_visual += 'X'
-
+    print(taboo_cells_arr)
     return str(taboo_visual)
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -269,6 +269,7 @@ class SokobanPuzzle(search.Problem):
 
         self.goal = self.puzzle.targets
         self.initial = (warehouse.worker, tuple(self.puzzle.boxes))
+        self.taboo = taboo_cells(self.puzzle)
 
     def actions(self, state):
         """
