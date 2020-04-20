@@ -71,8 +71,9 @@ def taboo_cells(warehouse):
     '''
 
     # Variables
-    global taboo_cells
+    taboo_cells
     taboo_visual = ''
+    global taboo_cells_arr
     taboo_cells_arr = []
     # Assign easier variable names to properties from the sokoban file
     warehouse_width = warehouse.ncols
@@ -148,7 +149,6 @@ def taboo_cells(warehouse):
             # Add taboo cell markers
             if (x, y) in taboo_cells_arr and (x, y) not in (walls):
                 taboo_visual += 'X'
-    print(taboo_cells_arr)
     return str(taboo_visual)
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -256,7 +256,7 @@ class SokobanPuzzle(search.Problem):
     macro actions. If self.macro is set False, the 'actions' function should 
     return elementary actions.        
     '''
-
+    global taboo_cells_arr
     allow_taboo_push = False
     macro = False
     weighted = False
