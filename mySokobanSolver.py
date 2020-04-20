@@ -677,7 +677,6 @@ def solve_weighted_sokoban_elem(warehouse, push_costs):
     #add the push costs to a global variable so the path costs can be used by the puzzle class
     for cost in push_costs:
         costs.append(cost)
-    print(costs)
     # define the problem
     puzzle = SokobanPuzzle(warehouse)
     #set the macro bool to True
