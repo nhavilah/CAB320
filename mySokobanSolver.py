@@ -280,34 +280,81 @@ class SokobanPuzzle(search.Problem):
         what type of list of actions is to be returned.
         """
         # Variable definitions
-        (worker, box_pos) = state
+        worker, box_pos = state
         allowable_actions = []
         #this part is used for macro actions
+##        if self.macro==True:
+##            # Update the warehouse state
+##            warehouse_update(self.puzzle, state)
+##            #this allows us to (unwisely) push boxes into taboo cells
+####            if self.allow_taboo_push==False:
+##            for box in box_pos:
+##                for direction, move in moveset.items():
+##                    next_pos = tuple_addition(box, move)
+##                    pushers_pos = tuple_subtraction(box, move)
+##                    #convert these to match the format provided by sanity_checker, otherwise it won't work properly
+##                    [a, b] = pushers_pos
+##                    pushers_pos = (b, a)
+##                    if next_pos not in (self.walls and box_pos) and can_go_there(self.puzzle, pushers_pos):
+##                            allowable_actions.append((box, direction))
+##            #this prevents us from pushing boxes into taboo cells
+##            else:
+##                for box in box_pos:
+##                    for direction, move in moveset.items():
+##                        next_pos = tuple_addition(box, move)
+##                        pushers_pos = tuple_subtraction(box, move)
+##                        #convert these to match the format provided by sanity_checker, otherwise it won't work properly
+##                        [a, b] = pushers_pos
+##                        pushers_pos = (b, a)
+##                        if next_pos not in (self.walls and box_pos) and can_go_there(self.puzzle, pushers_pos):
+##                                allowable_actions.append((box, direction))
+        #this part is used for elementary actions
+##        else:
+##            if self.allow_taboo_push==False:
+##                for direction,move in moveset.items():
+##                    #move the player
+##                    worker_next_pos=tuple_addition(worker,move)
+##                    box_next_pos=tuple_addition(worker_next_pos,move)
+##                    #check player isn't pushing into a wall
+##                    if worker_next_pos not in self.walls:
+##                        if worker_next_pos in box_pos:
+##                            if box_next_pos not in self.walls and box_next_pos not in box_pos and box_next_pos not in taboo_cells_arr:
+##                                allowable_actions.append(direction)
+##                        else:
+##                            allowable_actions.append(direction)
+##            else:
+##                for direction,move in moveset.items():
+##                    #move the player
+##                    worker_next_pos=tuple_addition(worker,move)
+##                    box_next_pos=tuple_addition(worker_next_pos,move)
+##                    #check player isn't pushing into a wall
+##                    if worker_next_pos not in self.walls:
+##                        if worker_next_pos in box_pos:
+##                            if box_next_pos not in self.walls and box_next_pos not in box_pos:
+##                                allowable_actions.append(direction)
+##                        else:
+##                            allowable_actions.append(direction)
         if self.macro==True:
-            # Update the warehouse state
-            warehouse_update(self.puzzle, state)
-            #this allows us to (unwisely) push boxes into taboo cells
             if self.allow_taboo_push==False:
+                warehouse_update(self.puzzle, state)
                 for box in box_pos:
-                    for direction, move in moveset.items():
-                        next_pos = tuple_addition(box, move)
-                        pushers_pos = tuple_subtraction(box, move)
-                        #convert these to match the format provided by sanity_checker, otherwise it won't work properly
-                        [a, b] = pushers_pos
-                        pushers_pos = (b, a)
-                        if next_pos not in (self.walls and box_pos and taboo_cells_arr) and can_go_there(self.puzzle, pushers_pos):
-                                allowable_actions.append((box, direction))
-            #this prevents us from pushing boxes into taboo cells
+                    for direction,move in moveset.items():
+                        next_state=tuple_addition(box,move)
+                        pushers_position=tuple_subtraction(box,move)
+                        [a,b]=pushers_position
+                        pushers_position=(b,a)
+                        if next_state not in self.puzzle.walls and next_state not in box_pos and next_state not in taboo_cells_arr and can_go_there(self.puzzle,pushers_position):
+                                allowable_actions.append((box,direction))
             else:
+                warehouse_update(self.puzzle, state)
                 for box in box_pos:
-                    for direction, move in moveset.items():
-                        next_pos = tuple_addition(box, move)
-                        pushers_pos = tuple_subtraction(box, move)
-                        #convert these to match the format provided by sanity_checker, otherwise it won't work properly
-                        [a, b] = pushers_pos
-                        pushers_pos = (b, a)
-                        if next_pos not in (self.walls and box_pos) and can_go_there(self.puzzle, pushers_pos):
-                                allowable_actions.append((box, direction))
+                    for direction,move in moveset.items():
+                        next_state=tuple_addition(box,move)
+                        pushers_position=tuple_subtraction(box,move)
+                        [a,b]=pushers_position
+                        pushers_position=(b,a)
+                        if next_state not in self.puzzle.walls and next_state not in box_pos and can_go_there(self.puzzle,pushers_position):
+                                allowable_actions.append((box,direction))
         #this part is used for elementary actions
         else:
             if self.allow_taboo_push==False:
@@ -690,3 +737,11 @@ def solve_weighted_sokoban_elem(warehouse, push_costs):
     else:
         return sol.solution()
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+def main():
+    wh = sokoban.Warehouse()
+    wh.load_warehouse("./warehouses/warehouse_01.txt")
+    solve_sokoban_macro(wh)
+
+
+if __name__ == '__main__':
+    main()
