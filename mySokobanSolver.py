@@ -26,14 +26,16 @@ import sokoban
 
 
 # Useful Variables
+#define a list of moves that the player/box can undertake
 moveset = {
     'Up': (0, -1),
     'Down': (0, 1),
     'Left': (-1, 0),
     'Right': (1, 0)
 }
-
+#define an empty array to store the costs of moving for the weighted solver
 costs = []
+#define an empty array to store the taboo cells identified, so the solvers can use them
 taboo_cells_arr = []
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -74,6 +76,7 @@ def taboo_cells(warehouse):
     # Variables
     taboo_cells
     taboo_visual = ''
+    #allows us to assign values globally so other solvers can use them
     global taboo_cells_arr
     taboo_cells_arr = []
     # Assign easier variable names to properties from the sokoban file
@@ -232,6 +235,7 @@ def warehouse_update(warehouse, state):
 
     '''
     warehouse.boxes = state[1]
+    warehouse.worker=state[0]
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 
@@ -257,11 +261,15 @@ class SokobanPuzzle(search.Problem):
     macro actions. If self.macro is set False, the 'actions' function should 
     return elementary actions.        
     '''
+    #call for the global values of taboo cells in order to use them for the actions
     global taboo_cells_arr
+    #allow player/boxes to move onto the taboo cells or not
     allow_taboo_push = False
+    #call for the macro solver's actions and results, else will call for the elementary solver's moves and actions
     macro = False
+    #allows the weighted elementary solver to define weightings for each movement
     weighted = False
-
+    #initialise variables for the rest of the class to use
     def __init__(self, warehouse):
         self.puzzle = warehouse
 
@@ -285,30 +293,38 @@ class SokobanPuzzle(search.Problem):
         allowable_actions = []
 
         # this part is used for macro actions
-
         if self.macro == True:
+            #this prevents the boxes moving onto taboo cells
             if self.allow_taboo_push == False:
+                #ensure the warehouse is updated
                 warehouse_update(self.puzzle, state)
                 for box in box_pos:
                     for direction, move in moveset.items():
                         next_state = tuple_addition(box, move)
                         pushers_position = tuple_subtraction(box, move)
+                        #rearrange the position array so the can_go_there function can read it
                         [a, b] = pushers_position
                         pushers_position = (b, a)
+                        #check the move is legal and the player can get there
                         if next_state not in self.puzzle.walls and next_state not in box_pos and next_state not in taboo_cells_arr and can_go_there(self.puzzle, pushers_position):
                             allowable_actions.append((box, direction))
+            #this allows boxes to(unwisely move onto taboo cells)
             else:
+                #ensure the warehouse is updated
                 warehouse_update(self.puzzle, state)
                 for box in box_pos:
                     for direction, move in moveset.items():
                         next_state = tuple_addition(box, move)
                         pushers_position = tuple_subtraction(box, move)
+                        #rearrange the position array so the can_go_there function can read it
                         [a, b] = pushers_position
                         pushers_position = (b, a)
+                        #check the move is legal and the player can get there
                         if next_state not in self.puzzle.walls and next_state not in box_pos and can_go_there(self.puzzle, pushers_position):
                             allowable_actions.append((box, direction))
         # this part is used for elementary actions
         else:
+            #prevents the box from being pushed into taboo cells
             if self.allow_taboo_push == False:
                 for direction, move in moveset.items():
                     # move the player
@@ -316,11 +332,15 @@ class SokobanPuzzle(search.Problem):
                     box_next_pos = tuple_addition(worker_next_pos, move)
                     # check player isn't pushing into a wall
                     if worker_next_pos not in self.walls:
+                        #checks if the player is pushing a box
                         if worker_next_pos in box_pos:
+                            #check the box move is legal
                             if box_next_pos not in self.walls and box_next_pos not in box_pos and box_next_pos not in taboo_cells_arr:
                                 allowable_actions.append(direction)
+                        #otherwise it's not pushing a box and the move is legal
                         else:
                             allowable_actions.append(direction)
+            #this allows the player to(unwisely) move boxes into taboo cells
             else:
                 for direction, move in moveset.items():
                     # move the player
@@ -328,9 +348,12 @@ class SokobanPuzzle(search.Problem):
                     box_next_pos = tuple_addition(worker_next_pos, move)
                     # check player isn't pushing into a wall
                     if worker_next_pos not in self.walls:
+                        #checks if the player is pushing a box
                         if worker_next_pos in box_pos:
+                            #check the box move is legal
                             if box_next_pos not in self.walls and box_next_pos not in box_pos:
                                 allowable_actions.append(direction)
+                        #otherwise it's not pushing a box and the move is legal
                         else:
                             allowable_actions.append(direction)
         return allowable_actions
@@ -342,20 +365,26 @@ class SokobanPuzzle(search.Problem):
         applying action a to state s results in
         s_next = s[:a]+s[-1:a-1:-1]
         """
-        # this should be set false so that way the box never enters the taboo cells(it can be set to true for elem so the player can move around to push the boxes)
+        #this part is used by the macro solver
         if self.macro == True:
+            #defines the current state
             worker = state[0]
             boxes = state[1]
             boxes = list(boxes)
             worker = actions[0]
+            #updates the positions of the boxes and player as needed
             updated_box = tuple_addition(actions[0], moveset[actions[1]])
             boxes[boxes.index(actions[0])] = updated_box
             boxes = tuple(boxes)
+        #this part is used by the elementary solvers(weighted and non weighted elementary solvers)
         else:
+            #defines the current state
             worker = state[0]
             boxes = state[1]
             boxes = list(boxes)
+            #updates the state as needed
             new_worker_pos = tuple_addition(worker, moveset[actions])
+            #moves boxes if they're pushed
             if new_worker_pos in boxes:
                 boxes[boxes.index(new_worker_pos)] = tuple_addition(
                     new_worker_pos, moveset[actions])
@@ -363,22 +392,38 @@ class SokobanPuzzle(search.Problem):
             boxes = tuple(boxes)
         return (worker, boxes)
 
-    # need this otherwise the algorithm returns None because there's no actual check implemented
     def goal_test(self, state):
+        """Returns a boolean based on whether the
+        current state matches the defined goal state
+        """
         return set(state[1]) == set(self.goal)
 
-    # define a heuristic to satisfy the conditions of astar_graph_search because for some reason it asks for h or problem.h
     def h(self, n):
+        """Call the heuristic function
+        with the current node index
+        and the current state of the puzzle """
         return heuristic(self, n)
 
     # define the path cost(used for the weighted solver(note this bit is lifted from search.py and then modified)
     def path_cost(self, c, state1, action, state2):
+        """
+        Defines the path cost for the solvers. If it is for the
+        macro and elementary solvers, they return a move cost of 1.
+
+        The weighted solver has different weightings for different moves.
+        If the move doesn't push a box, it only costs 1.
+        If the move pushes a box, it finds the cost relative to the index of the box
+        (From the global array of move costs)
+        """
         if self.weighted == False:
             return c+1
         else:
+            #define the current state
             player_initial = state1[0]
             boxes = state1[1]
+            #apply a move to the player
             player_final = tuple_addition(player_initial, moveset[action])
+            #check whether boxes get moved and return a path cost as defined by the descriptor above
             if player_final in boxes:
                 return c + costs[boxes.index(player_final)]
             else:
@@ -388,9 +433,11 @@ class SokobanPuzzle(search.Problem):
 
 
 def heuristic(problem, node):
-    # returns the average of:
-    # 1) The distance between the player and the closest box
-    # 2) The average distance between boxes and their closest targets
+    """
+    This heuristic returns the average of:
+    1) The distance between the player and the closest box
+    2) The average distance between boxes and their closest targets
+    """
     # step 1 is to define the variables
     worker = node.state[0]
     boxes = list(node.state[1])
@@ -423,43 +470,35 @@ def heuristic(problem, node):
 
 # ---------------------------------------------------------------------------------------------------------------------------
 
-def warehouse_update(warehouse, state):
-    # updates the positions of elements inside the warehouse
-    warehouse.boxes = state[1]
-    warehouse.worker = state[0]
-
 
 class player_path(search.Problem):
     '''
     This class is used to determine a path from the player to a given location. This location will, in most
     cases, be the location next to the box that the player needs to move
     '''
-
+    #initialise the current state of the mini puzzle
     def __init__(self, warehouse, goal, initial):
         self.puzzle = warehouse
         self.goal = goal
         self.initial = initial
         self.walls = self.puzzle.walls
         self.boxes = self.puzzle.boxes
-
+    #define the actions that the player can undertake
     def actions(self, state):
         allowable_actions = []
         for direction, move in moveset.items():
             next_state = tuple_addition(state, move)
+            #check the move is legal
             if next_state not in self.walls and next_state not in self.boxes:
                 allowable_actions.append(direction)
         return allowable_actions
-
+    #return the result of the applied action to the current state
     def result(self, state, actions):
         state = tuple_addition(state, moveset[actions])
         return state
-
+    #check if the player has reached the goal
     def goal_test(self, state):
         return state == self.goal
-
-    def h(self):
-        return manhattan_distance(self.worker, self.goal)
-
 
 def can_go_there(warehouse, dst):
     '''    
@@ -472,14 +511,17 @@ def can_go_there(warehouse, dst):
       True if the worker can walk to cell dst=(row,column) without pushing any box
       False otherwise
     '''
+    #flip the coordinates around so it works with can_go_there
     [a, b] = dst
     dst = (b, a)
-
+    #define a heuristic that returns the manhattan distance between the player and the target
     def heuristic(n):
         state = n.state
         return manhattan_distance(state, dst)
+    #define the puzzle, then apply the search algorithm to the puzzle
     puzzle = player_path(warehouse, dst, warehouse.worker)
     path = search.astar_graph_search(puzzle, heuristic)
+    #return the results of the solver
     if path is None:
         return False
     else:
@@ -510,6 +552,7 @@ def check_elem_action_seq(warehouse, action_seq):
                the sequence of actions.  This must be the same string as the
                string returned by the method  Warehouse.__str__()
     '''
+    #define the initial state
     worker = warehouse.worker
     walls = warehouse.walls
     boxes = warehouse.boxes
@@ -615,6 +658,7 @@ def solve_sokoban_elem(warehouse):
     puzzle.weighted = False
     # implement the algorithm we want to use
     sol = search.astar_graph_search(puzzle, puzzle.h)
+    #return the results of the solver
     if sol is None:
         return 'Impossible'
     else:
@@ -653,10 +697,12 @@ def solve_sokoban_macro(warehouse):
     puzzle.weighted = False
     # implement the algorithm we want to use
     sol = search.astar_graph_search(puzzle, puzzle.h)
+    #return the results of the solver
     if sol is None:
         return ['Impossible']
     else:
         solution_arr = []
+        #return the solution formatted to work in sanity_check
         for coord, box in sol.solution():
             solution_arr.append(((coord[1], coord[0]), box))
         return solution_arr
@@ -701,6 +747,7 @@ def solve_weighted_sokoban_elem(warehouse, push_costs):
     puzzle.weighted = True
     # implement the algorithm we want to use
     sol = search.astar_graph_search(puzzle, puzzle.h)
+    #return the results of the solver
     if sol is None:
         return 'Impossible'
     else:
@@ -708,13 +755,3 @@ def solve_weighted_sokoban_elem(warehouse, push_costs):
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-# Main function for testing
-
-# def main():
-#     wh = sokoban.Warehouse()
-#     wh.load_warehouse("./warehouses/warehouse_01.txt")
-#     solve_sokoban_macro(wh)
-
-
-# if __name__ == '__main__':
-#     main()
